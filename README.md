@@ -21,7 +21,7 @@
   }
 ```
 - made read-only to prevent accidental overwrites from tests
-- here is another alignment of that same tab if you want to get a quick feel for the data set: https://bit.ly/3nUAWeA
+- for more context, here is our [reconstruction information](https://github.com/JaneliaSciComp/Z0720_07m_recon/issues/15) about the tab
 
 ### Test Areas:
 - write down-sampled test results to `/nrs/flyem/bench/Z0720_07m_BR.n5/test_[dask|spark]_down/[test name]`
