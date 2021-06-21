@@ -1,42 +1,54 @@
-# multiscale_benchmarking
+# Large Scale Benchmark
+ 
+## Design
 
-Large Scale Benchmark:
+### Test Task:
+- Downsample 5 levels (s1 - s5) of a reasonably large source s0 volume.
 
-Key Question:
+### Key Question:
 - Which library + framework + configuration combination on average takes the least number of slot seconds to downsample a large n5 volume?
 
-Source Data:
-- s0 data set for old Z0720_07m_BR Sec30 alignment that we no longer need
-- {
+### Source Data:
+- s0 data set for old Z0720_07m_BR Sec30 alignment that we no longer need has been moved to `/nrs/flyem/bench/Z0720_07m_BR.n5` so that it's clear we want to keep it around for testing
+- full path to data set is: `/nrs/flyem/bench/Z0720_07m_BR.n5/render/Sec30/v1_acquire_trimmed_align___20210413_194018/s0` 
+- data set attributes are: 
+```json
+  {
     "dataType":"uint8",
     "compression":{"type":"gzip","useZlib":false,"level":-1},
-    "blockSize":[128,128,64],                                  # sorry Davis for irregular block size, assuming doesn't really matter
+    "blockSize":[128,128,64],
     "dimensions":[30519,8400,41163]
   }
-- moved to /nrs/flyem/bench/Z0720_07m_BR.n5 so that it's clear we want to keep it around for benchmark testing
+```
 - made read-only to prevent accidental overwrites from tests
 - here is another alignment of that same tab if you want to get a quick feel for the data set: https://bit.ly/3nUAWeA
 
-Test Areas:
-- thinking we can run tests here and remove s1-n directories after each test
-- /nrs/flyem/bench/Z0720_07m_BR.n5/test_dask_down:
-    attributes.json
-    s0 -> /nrs/flyem/bench/Z0720_07m_BR.n5/render/Sec30/v1_acquire_trimmed_align___20210413_194018/s0
-- /nrs/flyem/bench/Z0720_07m_BR.n5/test_spark_down:
-    attributes.json
-    s0 -> /nrs/flyem/bench/Z0720_07m_BR.n5/render/Sec30/v1_acquire_trimmed_align___20210413_194018/s0
+### Test Areas:
+- write down-sampled test results to `/nrs/flyem/bench/Z0720_07m_BR.n5/test_[dask|spark]_down/[test name]`
 
-Possible Variants to Test:
-- spark  1 slot worker ( 1 slot/executor,  1 executor/worker,  0 overhead slot/worker)   # how much does having so many JVMs affect performance
-- spark 11 slot worker ( 5 slots/executor, 2 executors/worker, 1 overhead slot/worker)   # fits well with busy cluster and 48-core nodes, potential new default setup but would like to verify
-- spark 32 slot worker ( 6 slots/executor, 5 executors/worker, 2 overhead slots/worker)  # our old default setup
-- spark 44 slot worker (41 slots/executor, 1 executor/worker,  2 overhead slots/worker)  # similar to 11 slot but with one JVM, how much does GC affect performance
-- dask ... need Davis to suggest useful variants
+### Variants to Test:
+| Test | Short Description | Full Description | Notes |
+| --- | --- | --- | --- |
+| SA | spark single core | 1 slot/executor,  1 executor/worker,  0 overhead slot/worker (220 total worker slots) | Does having so many JVMs affect performance? |
+| SB | spark current default | 5 slots/executor, 2 executors/worker, 1 overhead slot/worker (220 total worker slots) | This is the current but relatively new default setup that we'd like to verify. |
+| SC | spark legacy default | 6 slots/executor, 5 executors/worker, 2 overhead slots/worker (224 total worker slots) | This is the legacy setup we used before the 2021 cluster upgrade. |
+| SD | spark fat executor | 42 slots/executor, 1 executor/worker,  2 overhead slots/worker (220 total worker slots) | Does having so much in one JVM affect performance (e.g. because of GC problems)? |
+| DA | dask ... | | |
 
-Test Task:
-- downsample 5 levels (s1 - s5) of the source s0 volume
-
-Other Details:
+### Other Details:
 - run each test 10? times and look at median slot seconds in feeble attempt to mitigate variances in cluster and file system environment conditions
-- set up jobs to use 220 to 240 slots (5 full cluster nodes), small-ish runs that are big enough to exercise framework
+- set up jobs to use roughly 220 slots (5 full cluster nodes), small-ish runs that are big enough to exercise framework
 - ???
+ 
+## Results
+
+| Test | Run Date | Slot Seconds | Total Worker Slots | Turnaround Seconds | Notes |
+| --- | --- | --- | --- | --- | --- |
+| SA | 2021-06-18 | 447,040 | 220 | 2,032 |  `/groups/scicompsoft/home/trautmane/.spark/20210618_164316/logs/04-driver.log` |
+| SA | 2021-06-19 | 738,760 | 220 | 3,358 |  `/groups/scicompsoft/home/trautmane/.spark/20210619_184638/logs/04-driver.log` |
+| SB | 2021-06-19 | 530,860 | 220 | 2,413 |  `/groups/scicompsoft/home/trautmane/.spark/20210619_092316/logs/04-driver.log` |
+| SB | 2021-06-19 | 568,920 | 220 | 2,586 |  `/groups/scicompsoft/home/trautmane/.spark/20210619_205914/logs/04-driver.log` |
+| SC | 2021-06-19 | 488,768 | 224 | 2,182 |  `/groups/scicompsoft/home/trautmane/.spark/20210619_100609/logs/04-driver.log` |
+| SC | 2021-06-19 | 600,544 | 224 | 2,681 |  `/groups/scicompsoft/home/trautmane/.spark/20210619_212851/logs/04-driver.log` |
+| SD | 2021-06-19 | 850,520 | 220 | 3,866 |  `/groups/scicompsoft/home/trautmane/.spark/20210619_110125/logs/04-driver.log` |
+| SD | 2021-06-19 | 847,440 | 220 | 3,852 |  `/groups/scicompsoft/home/trautmane/.spark/20210619_234249/logs/04-driver.log` |
