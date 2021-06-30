@@ -33,8 +33,9 @@
 | SB | spark current default | 5 slots/executor, 2 executors/worker, 1 overhead slot/worker (220 total worker slots) | This is the current but relatively new default setup that we'd like to verify. |
 | SC | spark legacy default | 6 slots/executor, 5 executors/worker, 2 overhead slots/worker (224 total worker slots) | This is the legacy setup we used before the 2021 cluster upgrade. |
 | SD | spark fat executor | 42 slots/executor, 1 executor/worker,  2 overhead slots/worker (220 total worker slots) | Does having so much in one JVM affect performance (e.g. because of GC problems)? |
-| DA | dask ... | | |
-
+| DA | single-thread worker | One core per worker, 100 workers, 100 slots | Simplest deployment |
+| DB | dual-thread worker | Two cores per worker, 100 workers, 200 slots | Test scaling relative to simplest deployment |
+| DC | quad-thread worker | Four cores per worker, 25 workers, 100 slots | Test scaling relative to simplest deployment |
 ### Other Details:
 - run each test 10? times and look at median slot seconds in feeble attempt to mitigate variances in cluster and file system environment conditions
 - set up jobs to use roughly 220 slots (5 full cluster nodes), small-ish runs that are big enough to exercise framework
@@ -52,3 +53,6 @@
 | SC | 2021-06-19 | 600,544 | 224 | 2,681 |  `/groups/scicompsoft/home/trautmane/.spark/20210619_212851/logs/04-driver.log` |
 | SD | 2021-06-19 | 850,520 | 220 | 3,866 |  `/groups/scicompsoft/home/trautmane/.spark/20210619_110125/logs/04-driver.log` |
 | SD | 2021-06-19 | 847,440 | 220 | 3,852 |  `/groups/scicompsoft/home/trautmane/.spark/20210619_234249/logs/04-driver.log` |
+| DA | 2021-06-29 | 239,900 | 100 | 2,399 |  `/nrs/cosem/flyem/bench/Z0720_07m_BR.n5/test_dask_down/lsf_nw-100_tpw-1_report.html` |
+| DB | 2021-06-29 | 243,000 | 200 | 1,215 |  `/nrs/cosem/flyem/bench/Z0720_07m_BR.n5/test_dask_down/lsf_nw-200_tpw-2_report.html` |
+| DC | 2021-06-29 | 234,900 | 100 | 2,349 |  `/nrs/cosem/flyem/bench/Z0720_07m_BR.n5/test_dask_down/lsf_nw-25_tpw-4_report.html` |
